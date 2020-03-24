@@ -16,7 +16,7 @@ import datetime
 import json
 import pickle
 from argparse import ArgumentParser
-import animal_hash
+# import animal_hash
 
 import torch
 import torch.nn as nn
@@ -30,7 +30,7 @@ import datasets as dset
 def prepare_parser():
   usage = 'Parser for all scripts.'
   parser = ArgumentParser(description=usage)
-  
+
   ### Dataset/Dataloader stuff ###
   parser.add_argument(
     '--dataset', type=str, default='I128_hdf5',
@@ -46,9 +46,9 @@ def prepare_parser():
          '(default: %(default)s)')
   parser.add_argument(
     '--no_pin_memory', action='store_false', dest='pin_memory', default=True,
-    help='Pin data into memory through dataloader? (default: %(default)s)') 
+    help='Pin data into memory through dataloader? (default: %(default)s)')
   parser.add_argument(
-    '--shuffle', action='store_true', default=False,
+    '--shuffle', action='store_true', default=True,
     help='Shuffle the data (strongly recommended)? (default: %(default)s)')
   parser.add_argument(
     '--load_in_mem', action='store_true', default=False,
@@ -56,8 +56,8 @@ def prepare_parser():
   parser.add_argument(
     '--use_multiepoch_sampler', action='store_true', default=False,
     help='Use the multi-epoch sampler for dataloader? (default: %(default)s)')
-  
-  
+
+
   ### Model stuff ###
   parser.add_argument(
     '--model', type=str, default='BigGAN',
@@ -69,7 +69,7 @@ def prepare_parser():
   parser.add_argument(
     '--D_param', type=str, default='SN',
     help='Parameterization style to use for D, spectral norm (SN) or SVD (SVD)'
-         ' or None (default: %(default)s)')    
+         ' or None (default: %(default)s)')
   parser.add_argument(
     '--G_ch', type=int, default=64,
     help='Channel multiplier for G (default: %(default)s)')
@@ -97,7 +97,7 @@ def prepare_parser():
     help='Noise dimensionality: %(default)s)')
   parser.add_argument(
     '--z_var', type=float, default=1.0,
-    help='Noise variance: %(default)s)')    
+    help='Noise variance: %(default)s)')
   parser.add_argument(
     '--hier', action='store_true', default=False,
     help='Use hierarchical z in G? (default: %(default)s)')
@@ -148,13 +148,13 @@ def prepare_parser():
     help='Read as fm_loss ONLY. Feature matching loss for unlabeled portion of data on G step. (default: %(default)s)')
   parser.add_argument(
     '--mh_loss_weight', type=float, default=0.05,
-    help='The weight for the class specific part of the multi hinge loss. Best weight for C100: %(default)s)')   
+    help='The weight for the class specific part of the multi hinge loss. Best weight for C100: %(default)s)')
   parser.add_argument(
     '--mh_fmloss_weight', type=float, default=1.0,
-    help='The weight for the class agnostic feature matching part of the multi hinge loss. Best weight for C100: %(default)s)')   
-    
-    
-         
+    help='The weight for the class agnostic feature matching part of the multi hinge loss. Best weight for C100: %(default)s)')
+
+
+
   ### Model init stuff ###
   parser.add_argument(
     '--seed', type=int, default=0,
@@ -170,7 +170,7 @@ def prepare_parser():
     '--skip_init', action='store_true', default=False,
     help='Skip initialization, ideal for testing when ortho init was used '
           '(default: %(default)s)')
-  
+
   ### Optimizer stuff ###
   parser.add_argument(
     '--G_lr', type=float, default=5e-5,
@@ -190,18 +190,18 @@ def prepare_parser():
   parser.add_argument(
     '--D_B2', type=float, default=0.999,
     help='Beta2 to use for Discriminator (default: %(default)s)')
-    
+
   ### Batch size, parallel, and precision stuff ###
   parser.add_argument(
-    '--batch_size', type=int, default=64,
+    '--batch_size', type=int, default=256,
     help='Default overall batchsize (default: %(default)s)')
   parser.add_argument(
-    '--G_batch_size', type=int, default=0,
+    '--G_batch_size', type=int, default=256,
     help='Batch size to use for G; if 0, same as D (default: %(default)s)')
   parser.add_argument(
     '--num_G_accumulations', type=int, default=1,
     help='Number of passes to accumulate G''s gradients over '
-         '(default: %(default)s)')  
+         '(default: %(default)s)')
   parser.add_argument(
     '--num_D_steps', type=int, default=2,
     help='Number of D steps per G step (default: %(default)s)')
@@ -216,7 +216,7 @@ def prepare_parser():
     '--num_epochs', type=int, default=500,
     help='Number of epochs to train for (default: %(default)s). Related to memory, setting to 1e12 blows up memory...')
   parser.add_argument(
-    '--parallel', action='store_true', default=False,
+    '--parallel', action='store_true', default=True,
     help='Train with multiple GPUs (default: %(default)s)')
   parser.add_argument(
     '--G_fp16', action='store_true', default=False,
@@ -238,9 +238,9 @@ def prepare_parser():
   parser.add_argument(
     '--num_standing_accumulations', type=int, default=16,
     help='Number of forward passes to use in accumulating standing stats? '
-         '(default: %(default)s)')        
-    
-  ### Bookkeping stuff ###  
+         '(default: %(default)s)')
+
+  ### Bookkeping stuff ###
   parser.add_argument(
     '--G_eval_mode', action='store_true', default=False,
     help='Run G in eval mode (running/standing stats?) at sample/test time? '
@@ -271,7 +271,7 @@ def prepare_parser():
   parser.add_argument(
     '--hashname', action='store_true', default=False,
     help='Use a hash of the experiment name instead of the full config '
-         '(default: %(default)s)') 
+         '(default: %(default)s)')
   parser.add_argument(
     '--base_root', type=str, default='',
     help='Default location to store all weights, samples, data, and logs '
@@ -287,7 +287,7 @@ def prepare_parser():
     help='Default location to store logs (default: %(default)s)')
   parser.add_argument(
     '--samples_root', type=str, default='samples',
-    help='Default location to store samples (default: %(default)s)')  
+    help='Default location to store samples (default: %(default)s)')
   parser.add_argument(
     '--pbar', type=str, default='mine',
     help='Type of progressbar to use; one of "mine" or "tqdm" '
@@ -307,8 +307,8 @@ def prepare_parser():
   parser.add_argument(
     '--historical_save_every', type=int, default=1e9,
     help='Save a non-overwritten version every X iterations (default: %(default)s)')
-         
-         
+
+
   ### EMA Stuff ###
   parser.add_argument(
     '--ema', action='store_true', default=False,
@@ -322,8 +322,8 @@ def prepare_parser():
   parser.add_argument(
     '--ema_start', type=int, default=0,
     help='When to start updating the EMA weights (default: %(default)s)')
-  
-  ### Numerical precision and SV stuff ### 
+
+  ### Numerical precision and SV stuff ###
   parser.add_argument(
     '--adam_eps', type=float, default=1e-8,
     help='epsilon value to use for Adam (default: %(default)s)')
@@ -345,8 +345,8 @@ def prepare_parser():
   parser.add_argument(
     '--num_D_SV_itrs', type=int, default=1,
     help='Number of SV itrs in D (default: %(default)s)')
-  
-  ### Ortho reg stuff ### 
+
+  ### Ortho reg stuff ###
   parser.add_argument(
     '--G_ortho', type=float, default=0.0, # 1e-4 is default for BigGAN
     help='Modified ortho reg coefficient in G(default: %(default)s)')
@@ -357,12 +357,12 @@ def prepare_parser():
     '--toggle_grads', action='store_true', default=True,
     help='Toggle D and G''s "requires_grad" settings when not training them? '
          ' (default: %(default)s)')
-  
+
   ### Which train function ###
   parser.add_argument(
     '--which_train_fn', type=str, default='GAN',
-    help='How2trainyourbois (default: %(default)s)')  
-  
+    help='How2trainyourbois (default: %(default)s)')
+
   ### Resume training stuff
   parser.add_argument(
     '--load_weights', type=str, default='',
@@ -371,7 +371,7 @@ def prepare_parser():
   parser.add_argument(
     '--resume', action='store_true', default=False,
     help='Resume training? (default: %(default)s)')
-  
+
   ### Log stuff ###
   parser.add_argument(
     '--logstyle', type=str, default='%3.3e',
@@ -391,8 +391,8 @@ def prepare_parser():
   parser.add_argument(
     '--sv_log_interval', type=int, default=10,
     help='Iteration interval for logging singular values '
-         ' (default: %(default)s)') 
-   
+         ' (default: %(default)s)')
+
   return parser
 
 # Arguments for sample.py; not presently used in train.py
@@ -412,7 +412,7 @@ def add_sample_parser(parser):
   parser.add_argument(
     '--sample_interps', action='store_true', default=False,
     help='Produce interpolation sheets and stick them in '
-         'the samples root? (default: %(default)s)')         
+         'the samples root? (default: %(default)s)')
   parser.add_argument(
     '--sample_sheet_folder_num', type=int, default=-1,
     help='Number to use for the folder for these sample sheets '
@@ -430,7 +430,7 @@ def add_sample_parser(parser):
          'have approximately the same effect. (default: %(default)s)')
   parser.add_argument(
     '--sample_inception_metrics', action='store_true', default=False,
-    help='Calculate Inception metrics with sample.py? (default: %(default)s)')  
+    help='Calculate Inception metrics with sample.py? (default: %(default)s)')
   parser.add_argument(
     '--sample_np_mem', action='store_true', default=False,
     help='Sample the GAN and stick it in memory. (default: %(default)s)')
@@ -469,9 +469,9 @@ def add_sample_parser(parser):
 
 # Convenience dicts
 dset_dict = {'I32': dset.ImageFolder, 'I64': dset.ImageFolder,
-             'TI64': dset.ImageFolder,'TI64_hdf5': dset.ILSVRC_HDF5, 
+             'TI64': dset.ImageFolder,'TI64_hdf5': dset.ILSVRC_HDF5,
              'I128': dset.ImageFolder, 'I256': dset.ImageFolder,
-             'I32_hdf5': dset.ILSVRC_HDF5, 'I64_hdf5': dset.ILSVRC_HDF5, 
+             'I32_hdf5': dset.ILSVRC_HDF5, 'I64_hdf5': dset.ILSVRC_HDF5,
              'I128_hdf5': dset.ILSVRC_HDF5, 'I256_hdf5': dset.ILSVRC_HDF5,
              'C10': dset.CIFAR10, 'C100': dset.CIFAR100,
             'STL64': dset.STL10, 'STL32': dset.STL10, 'STL48': dset.STL10, 'STL96': dset.STL10,
@@ -497,7 +497,7 @@ nclass_dict = {'I32': 1000, 'I32_hdf5': 1000,
                'I256': 1000, 'I256_hdf5': 1000,
                'C10': 10, 'C100': 100, 'STL64': 10, 'STL32': 10, 'STL48': 10, 'STL96': 10,
 }
-# Number of classes to put per sample sheet               
+# Number of classes to put per sample sheet
 classes_per_sheet_dict = {'I32': 50, 'I32_hdf5': 50,
                           'I64': 50, 'I64_hdf5': 50,
                           'TI64': 50, 'TI64_hdf5': 50,
@@ -545,7 +545,7 @@ class RandomCropLongEdge(object):
     # height, width
     size = (min(img.size), min(img.size))
     # Only step forward along this edge if it's the long edge
-    top = (0 if size[0] == img.size[0] 
+    top = (0 if size[0] == img.size[0]
           else np.random.randint(low=0,high=img.size[0] - size[0]))
     left = (0 if size[1] == img.size[1]
           else np.random.randint(low=0,high=img.size[1] - size[1]))
@@ -554,7 +554,7 @@ class RandomCropLongEdge(object):
   def __repr__(self):
     return self.__class__.__name__
 
-    
+
 # multi-epoch Dataset sampler to avoid memory leakage and enable resumption of
 # training from the same sample regardless of if we stop mid-epoch
 class MultiEpochSampler(torch.utils.data.Sampler):
@@ -580,7 +580,7 @@ class MultiEpochSampler(torch.utils.data.Sampler):
   def __iter__(self):
     n = len(self.data_source)
     # Determine number of epochs
-    num_epochs = int(np.ceil((n * self.num_epochs 
+    num_epochs = int(np.ceil((n * self.num_epochs
                               - (self.start_itr * self.batch_size)) / float(n)))
     # Sample all the indices, and then grab the last num_epochs index sets;
     # This ensures if we're starting at epoch 4, we're still grabbing epoch 4's
@@ -600,7 +600,7 @@ class MultiEpochSampler(torch.utils.data.Sampler):
 
 
 # Convenience function to centralize all data loaders
-def get_data_loaders(dataset, data_root=None, augment=False, batch_size=64, 
+def get_data_loaders(dataset, data_root=None, augment=False, batch_size=64,
                      num_workers=8, shuffle=True, load_in_mem=False, hdf5=False,
                      pin_memory=True, drop_last=True, start_itr=0,
                      num_epochs=500, use_multiepoch_sampler=False, use_unlabeled_data=False,
@@ -624,8 +624,8 @@ def get_data_loaders(dataset, data_root=None, augment=False, batch_size=64,
     if dataset in ['STL64', 'STL32', 'STL48']:
       dataset_kwargs['train'] = False
       dataset_kwargs['unlabeled'] = False
-  
-  # HDF5 datasets have their own inbuilt transform, no need to train_transform  
+
+  # HDF5 datasets have their own inbuilt transform, no need to train_transform
   if 'hdf5' in dataset:
     train_transform = None
   else:
@@ -660,7 +660,7 @@ def get_data_loaders(dataset, data_root=None, augment=False, batch_size=64,
 
   # Prepare loader; the loaders list is for forward compatibility with
   # using validation / test splits.
-  loaders = []   
+  loaders = []
   if use_multiepoch_sampler:
     print('Using multiepoch sampler from start_itr %d...' % start_itr)
     loader_kwargs = {'num_workers': num_workers, 'pin_memory': pin_memory, 'drop_last': drop_last}
@@ -683,7 +683,7 @@ def get_data_loaders(dataset, data_root=None, augment=False, batch_size=64,
           self.unlimit_gen = self.generator(True)
           self.raw_loader = raw_loader
           self.bs = batch_size
-      
+
       def generator(self, inf=False):
           while True:
               theloader = DataLoader(self.raw_loader, batch_size=self.bs, shuffle=True, **loader_kwargs)
@@ -691,21 +691,21 @@ def get_data_loaders(dataset, data_root=None, augment=False, batch_size=64,
                   x, y = xy
                   yield x, y
               if not inf: break
-  
+
       def next(self):
           return next(self.unlimit_gen)
-  
+
       def get_iter(self):
           return self.generator()
-  
+
       def __len__(self):
           return len(self.raw_loader)
-        
+
     unl_set = which_dataset(root=data_root, transform=train_transform,
                             load_in_mem=load_in_mem, train=False, **dataset_kwargs)
     unl_loader = MyLiteDataLoader(unl_set, batch_size)
     loaders.append(unl_loader)
-    
+
   return loaders
 
 
@@ -762,7 +762,7 @@ class ema(object):
       decay = self.decay
     with torch.no_grad():
       for key in self.source_dict:
-        self.target_dict[key].data.copy_(self.target_dict[key].data * decay 
+        self.target_dict[key].data.copy_(self.target_dict[key].data * decay
                                      + self.source_dict[key].data * (1 - decay))
 
 
@@ -776,7 +776,7 @@ def ortho(model, strength=1e-4, blacklist=[]):
       if len(param.shape) < 2 or any([param is item for item in blacklist]):
         continue
       w = param.view(param.shape[0], -1)
-      grad = (2 * torch.mm(torch.mm(w, w.t()) 
+      grad = (2 * torch.mm(torch.mm(w, w.t())
               * (1. - torch.eye(w.shape[0], device=w.device)), w))
       param.grad.data += strength * grad.view(param.shape)
 
@@ -791,7 +791,7 @@ def default_ortho(model, strength=1e-4, blacklist=[]):
       if len(param.shape) < 2 or param in blacklist:
         continue
       w = param.view(param.shape[0], -1)
-      grad = (2 * torch.mm(torch.mm(w, w.t()) 
+      grad = (2 * torch.mm(torch.mm(w, w.t())
                - torch.eye(w.shape[0], device=w.device), w))
       param.grad.data += strength * grad.view(param.shape)
 
@@ -810,7 +810,7 @@ def join_strings(base_string, strings):
 
 
 # Save a model's weights, optimizer, and the state_dict
-def save_weights(G, D, state_dict, weights_root, experiment_name, 
+def save_weights(G, D, state_dict, weights_root, experiment_name,
                  name_suffix=None, G_ema=None):
   root = '/'.join([weights_root, experiment_name])
   if not os.path.exists(root):
@@ -819,23 +819,23 @@ def save_weights(G, D, state_dict, weights_root, experiment_name,
     print('Saving weights to %s/%s...' % (root, name_suffix))
   else:
     print('Saving weights to %s...' % root)
-  torch.save(G.state_dict(), 
+  torch.save(G.state_dict(),
               '%s/%s.pth' % (root, join_strings('_', ['G', name_suffix])))
-  torch.save(G.optim.state_dict(), 
+  torch.save(G.optim.state_dict(),
               '%s/%s.pth' % (root, join_strings('_', ['G_optim', name_suffix])))
-  torch.save(D.state_dict(), 
+  torch.save(D.state_dict(),
               '%s/%s.pth' % (root, join_strings('_', ['D', name_suffix])))
   torch.save(D.optim.state_dict(),
               '%s/%s.pth' % (root, join_strings('_', ['D_optim', name_suffix])))
   torch.save(state_dict,
               '%s/%s.pth' % (root, join_strings('_', ['state_dict', name_suffix])))
   if G_ema is not None:
-    torch.save(G_ema.state_dict(), 
+    torch.save(G_ema.state_dict(),
                 '%s/%s.pth' % (root, join_strings('_', ['G_ema', name_suffix])))
 
 
 # Load a model's weights, optimizer, and the state_dict
-def load_weights(G, D, state_dict, weights_root, experiment_name, 
+def load_weights(G, D, state_dict, weights_root, experiment_name,
                  name_suffix=None, G_ema=None, strict=True, load_optim=True):
   root = '/'.join([weights_root, experiment_name])
   if name_suffix:
@@ -914,7 +914,7 @@ class MyLogger(object):
         else:
           print('{} exists, deleting...'.format('%s_%s.log' % (self.root, item)))
         os.remove('%s/%s.log' % (self.root, item))
-  
+
   # Log in plaintext; this is designed for being read in MATLAB(sorry not sorry)
   def log(self, itr, **kwargs):
     for arg in kwargs:
@@ -935,7 +935,7 @@ class MyLogger(object):
 
 # Write some metadata to the logs directory
 def write_metadata(logs_root, experiment_name, config, state_dict):
-  with open(('%s/%s/metalog.txt' % 
+  with open(('%s/%s/metalog.txt' %
              (logs_root, experiment_name)), 'w') as writefile:
     writefile.write('datetime: %s\n' % str(datetime.datetime.now()))
     writefile.write('config: %s\n' % str(config))
@@ -966,7 +966,7 @@ def progress(items, desc='', total=None, min_delay=0.1, displaytype='s1k'):
       print("\r%s%d/%d (%6.2f%%)" % (
               desc, n+1, total, n / float(total) * 100), end=" ")
       if n > 0:
-        
+
         if displaytype == 's1k': # minutes/seconds for 1000 iters
           next_1000 = n + (1000 - n%1000)
           t_done = t_now - t_start
@@ -978,7 +978,7 @@ def progress(items, desc='', total=None, min_delay=0.1, displaytype='s1k'):
           t_total = t_done / n * total
           outlist = list(divmod(t_done, 60)) + list(divmod(t_total - t_done, 60))
           print("(TE/ETA: %d:%02d / %d:%02d)" % tuple(outlist), end=" ")
-          
+
       sys.stdout.flush()
       t_last = t_now
     yield item
@@ -1016,7 +1016,7 @@ def sample_sheet(G, classes_per_sheet, num_classes, samples_per_class, parallel,
       if (z_ is not None) and hasattr(z_, 'sample_') and classes_per_sheet <= z_.size(0):
         z_.sample_()
       else:
-        z_ = torch.randn(classes_per_sheet, G.dim_z, device='cuda')        
+        z_ = torch.randn(classes_per_sheet, G.dim_z, device='cuda')
       with torch.no_grad():
         if parallel:
           o = nn.parallel.data_parallel(G, (z_[:classes_per_sheet], G.shared(y)))
@@ -1025,10 +1025,10 @@ def sample_sheet(G, classes_per_sheet, num_classes, samples_per_class, parallel,
 
       ims += [o.data.cpu()]
     # This line should properly unroll the images
-    out_ims = torch.stack(ims, 1).view(-1, ims[0].shape[1], ims[0].shape[2], 
+    out_ims = torch.stack(ims, 1).view(-1, ims[0].shape[1], ims[0].shape[2],
                                        ims[0].shape[3]).data.float().cpu()
     # The path for the samples
-    image_filename = '%s/%s/%d/samples%d.jpg' % (samples_root, experiment_name, 
+    image_filename = '%s/%s/%d/samples%d.jpg' % (samples_root, experiment_name,
                                                  folder_number, i)
     torchvision.utils.save_image(out_ims, image_filename,
                                  nrow=samples_per_class, normalize=True)
@@ -1086,7 +1086,7 @@ def print_grad_norms(net):
     order = np.argsort([item[0] for item in gradsums])
     print(['%3.3e,%3.3e, %s' % (gradsums[item_index][0],
                                 gradsums[item_index][1],
-                                str(gradsums[item_index][2])) 
+                                str(gradsums[item_index][2]))
                               for item_index in order])
 
 
@@ -1149,14 +1149,14 @@ def name_from_config(config):
 
 
 # A simple function to produce a unique experiment name from the animal hashes.
-def hashname(name):
-  h = hash(name)
-  a = h % len(animal_hash.a)
-  h = h // len(animal_hash.a)
-  b = h % len(animal_hash.b)
-  h = h // len(animal_hash.c)
-  c = h % len(animal_hash.c)
-  return animal_hash.a[a] + animal_hash.b[b] + animal_hash.c[c]
+# def hashname(name):
+#   h = hash(name)
+#   a = h % len(animal_hash.a)
+#   h = h // len(animal_hash.a)
+#   b = h % len(animal_hash.b)
+#   h = h // len(animal_hash.c)
+#   c = h % len(animal_hash.c)
+#   return animal_hash.a[a] + animal_hash.b[b] + animal_hash.c[c]
 
 
 # Get GPU memory, -i is the index
@@ -1169,7 +1169,7 @@ def count_parameters(module):
   print('Number of parameters: {}'.format(
     sum([p.data.nelement() for p in module.parameters()])))
 
-   
+
 # Convenience function to sample an index, not actually a 1-hot
 def sample_1hot(batch_size, num_classes, device='cuda'):
   return torch.randint(low=0, high=num_classes, size=(batch_size,),
@@ -1185,7 +1185,7 @@ def sample_1hot(batch_size, num_classes, device='cuda'):
 # This is partially based on https://discuss.pytorch.org/t/subclassing-torch-tensor/23754/2
 class Distribution(torch.Tensor):
   # Init the params of the distribution
-  def init_distribution(self, dist_type, **kwargs):    
+  def init_distribution(self, dist_type, **kwargs):
     self.dist_type = dist_type
     self.dist_kwargs = kwargs
     if self.dist_type == 'normal':
@@ -1197,25 +1197,25 @@ class Distribution(torch.Tensor):
     if self.dist_type == 'normal':
       self.normal_(self.mean, self.var)
     elif self.dist_type == 'categorical':
-      self.random_(0, self.num_categories)    
+      self.random_(0, self.num_categories)
     # return self.variable
-    
+
   # Silly hack: overwrite the to() method to wrap the new object
   # in a distribution as well
   def to(self, *args, **kwargs):
     new_obj = Distribution(self)
     new_obj.init_distribution(self.dist_type, **self.dist_kwargs)
-    new_obj.data = super().to(*args, **kwargs)    
+    new_obj.data = super().to(*args, **kwargs)
     return new_obj
 
 
 # Convenience function to prepare a z and y vector
-def prepare_z_y(G_batch_size, dim_z, nclasses, device='cuda', 
+def prepare_z_y(G_batch_size, dim_z, nclasses, device='cuda',
                 fp16=False,z_var=1.0):
   z_ = Distribution(torch.randn(G_batch_size, dim_z, requires_grad=False))
   z_.init_distribution('normal', mean=0, var=z_var)
-  z_ = z_.to(device,torch.float16 if fp16 else torch.float32)   
-  
+  z_ = z_.to(device,torch.float16 if fp16 else torch.float32)
+
   if fp16:
     z_ = z_.half()
 
@@ -1241,7 +1241,7 @@ def accumulate_standing_stats(net, z, y, nclasses, num_accumulations=16):
       y.random_(0, nclasses)
       x = net(z, net.shared(y)) # No need to parallelize here unless using syncbn
   # Set to eval mode
-  net.eval() 
+  net.eval()
 
 
 # This version of Adam keeps an fp32 copy of the parameters and
@@ -1258,7 +1258,7 @@ class Adam16(Optimizer):
             weight_decay=weight_decay)
     params = list(params)
     super(Adam16, self).__init__(params, defaults)
-      
+
   # Safety modification to make sure we floatify our state
   def load_state_dict(self, state_dict):
     super(Adam16, self).load_state_dict(state_dict)
@@ -1282,7 +1282,7 @@ class Adam16(Optimizer):
       for p in group['params']:
         if p.grad is None:
           continue
-          
+
         grad = p.grad.data.float()
         state = self.state[p]
 
@@ -1313,7 +1313,7 @@ class Adam16(Optimizer):
         bias_correction1 = 1 - beta1 ** state['step']
         bias_correction2 = 1 - beta2 ** state['step']
         step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
-      
+
         state['fp32_p'].addcdiv_(-step_size, exp_avg, denom)
         p.data = state['fp32_p'].half()
 
